@@ -1,0 +1,12 @@
+# Track only these two skills; everything else in this folder (other synced skills) stays out.
+/*
+!/.gitignore
+!/README.md
+!/stock-picks/
+!/trading-analysis/
+
+__pycache__/
+*.pyc
+*.pkl
+*.db
+.env
