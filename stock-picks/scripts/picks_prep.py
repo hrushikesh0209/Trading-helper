@@ -57,6 +57,10 @@ def main():
     out += table[:2] + table[2:7] + table[-3:] + [""]
     out.append(f"Screen summary: {summary['universe']} stocks screened, {summary['with_setup']} with a qualifying setup, "
                f"{summary['swing_list']} on the swing list. Regime allows up to {summary['picks']} swing picks.\n")
+    tm = summary.get("timing")
+    if tm and not tm["take_entries"]:
+        out.append("**MARKET TIMING SAYS STAND ASIDE: no new entries today.** Every candidate below is a Wait "
+                   "(watchlist only), whatever its news; it can become a Buy once RSRS turns back on.\n")
 
     for title, df in (("Swing candidates (hold up to 20 trading days; stop trails at highest close − 2 × ATR)", swing),):
         out.append(f"## {title}\n")

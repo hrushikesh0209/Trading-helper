@@ -80,9 +80,12 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--date")
     a = ap.parse_args()
-    day = a.date or sorted(p.name[:10] for p in SCREENS.glob("*_review.json"))[-1]
+    day = a.date or sorted(p.name[:10] for p in SCREENS.glob("*_summary.json"))[-1]
     summary = json.loads((SCREENS / f"{day}_summary.json").read_text(encoding="utf-8"))
-    review = json.loads((SCREENS / f"{day}_review.json").read_text(encoding="utf-8-sig"))
+    rpath = SCREENS / f"{day}_review.json"
+    review = json.loads(rpath.read_text(encoding="utf-8-sig")) if rpath.exists() else []
+    tm = summary.get("timing") or {"take_entries": True, "text": ""}
+    take = tm["take_entries"]
     rv = {(x["symbol"], x["list"]): x for x in review}
     lists = {"swing": pd.read_csv(SCREENS / f"{day}_swing25.csv")}  # reports are swing-only
     regime_md = (SCREENS / f"{day}_regime.md").read_text(encoding="utf-8")
@@ -90,14 +93,22 @@ def main():
 
     parts, kept_rows, dropped = [], [], []
     for style, df in lists.items():
-        keep = [r for r in df.itertuples() if rv.get((r.symbol, style), {}).get("verdict") == "keep"]
+        keep = [r for r in df.itertuples() if take and rv.get((r.symbol, style), {}).get("verdict") == "keep"]
         for r in df.itertuples():
             v = rv.get((r.symbol, style), {})
-            if v.get("verdict") != "keep":
+            if not take:  # RSRS stand-aside overrides the review: watchlist only
+                why = "Market timing (RSRS) says stand aside: no new entries"
+                if v.get("reason") and not v["reason"].startswith("Market timing"):
+                    why += f"; review: {v['reason']}"
+                dropped.append(("Wait", r.symbol, why))
+            elif v.get("verdict") != "keep":
                 dropped.append((v.get("recommendation", "Wait"), r.symbol, v.get("reason", "not reviewed")))
         title = "Swing picks (hold up to 4 weeks)"
         parts.append(f"<h2>{title}</h2>")
-        if not keep:
+        if not take:
+            parts.append('<p class="sub"><b>Market timing says stand aside: no new entries today.</b> The candidates below are a '
+                         'watchlist; they can become Buys when RSRS turns back on. Open trades keep their own stops.</p>')
+        elif not keep:
             parts.append('<p class="sub">No pick today. The rules would rather sit out than force a trade.</p>')
         for i, r in enumerate(keep):
             parts.append(card(r, rv[(r.symbol, style)], f"{style}{i}", style))
@@ -120,7 +131,9 @@ def main():
 <title>Stock Picks {day}</title><style>{CSS}</style><script src="https://s3.tradingview.com/tv.js"></script></head><body><main>
 <h1>Stock picks · {day}</h1>
 <p class="sub">Nifty 500 screen after NSE close · <span class="pill {regime_class(summary['regime'])}">{summary['regime'].upper()}</span>
+ · <span class="pill {'on' if take else 'off'}">{'TAKE ENTRIES' if take else 'STAND ASIDE'}</span>
  · up to {summary['picks']} swing picks · {summary['universe']} stocks screened, {summary['with_setup']} qualified</p>
+<p class="note">Market timing: {html.escape(tm.get('text', ''))}</p>
 {''.join(parts)}
 <h2>Market regime</h2><div class="wrap"><table><tr><th>Signal</th><th>Value</th></tr>{reg_html}</table></div>
 <h2>Sectors</h2><div class="wrap"><table><tr><th>Sector</th><th>Stocks</th><th>Quadrant</th><th>RS vs Nifty</th><th>RS momentum</th><th>1M</th><th>3M</th><th>&gt; SMA50</th><th>&gt; SMA200</th></tr>{sec_html}</table></div>

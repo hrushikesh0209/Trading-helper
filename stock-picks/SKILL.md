@@ -25,9 +25,10 @@ Cost: one reviewer subagent, about 30–60K tokens. Everything else is Python.
    > You are the /stock-picks reviewer for `<DATE>`. Read `C:\Users\Dell\.claude\skills\stock-picks\references\reviewer.md` and follow it exactly, using the brief at `D:\TradingAgentsData\screens\<DATE>_shortlist.md` and the knowledge files it names. Do not use web search or fetch any other data.
 
    If the swing table is empty, skip the reviewer, write `[]` to `<date>_review.json` and go to step 4.
+   If the summary's `timing.take_entries` is false (RSRS says stand aside), also skip the reviewer to save tokens: `picks_page.py` marks every candidate Wait for market timing on its own.
 4. **Page:** run `PY S\picks_page.py [--date D]`. It writes `<date>_picks.html` and appends kept picks to the picks log.
 5. **Reply to the user.** Every report is **swing trades only** (hold up to 20 trading days), the user's standing choice:
-   - **Header:** the regime in one line, and how many swing picks were kept.
+   - **Header:** the regime and the market-timing state (RSRS: take entries / stand aside, from the summary) in one line, and how many swing picks were kept. On a stand-aside day, say plainly that no new entries are taken and the list is a watchlist.
    - **Picks table:** recommendation (Buy) · symbol · sector · entry ₹ · stop-loss ₹ (risk %) · Target 1 ₹ (R) · Target 2 ₹ (R) · size.
    - **Why the levels:** one line per pick giving the technical source of the stop, T1 and T2 from the screen file (`stop_why`, `t1_why`, `t2_why`) and each target's historical hit rate (`t1_hit`, `t2_hit`), e.g. "stop below the 8 Oct swing low; T1 at the 22 Sep swing high (reached 41% of the time)". Mention detected chart patterns (`patterns`) as context only.
    - **Exit rule:** the trailing stop (highest close − 2 ATR) or the 20-day time stop closes the trade. Targets are optional booking points: half at T1 locks gains at a small cost, all at T1 wins more often for a similar profit.
@@ -41,6 +42,7 @@ Cost: one reviewer subagent, about 30–60K tokens. Everything else is Python.
 ## Other commands
 - **`update`:** `PY S\market_data.py daily` (prices, quality check, cleanup, screen). No tokens.
 - **`screen [date]`:** `PY S\screener.py [--date D]`. Shows the swing list (entry, stop-loss, both targets) without the news review. No tokens.
+- **`timing`:** `PY S\timing.py` shows the RSRS market-timing state (take entries / stand aside), its score and recent history. No tokens.
 - **`diagnose [date]`:** `PY S\diagnose.py [--date D] [--history]` answers "why these picks, or none?": data sanity, the rule-by-rule funnel, an independent recomputation of regime and sector numbers, and (with `--history`) how often the rules give zero picks. No tokens.
 - **`status`:** `PY S\market_data.py status`, plus the newest screen date and whether the daily task is installed (`Get-ScheduledTask -TaskName "TradingAgents Daily Market Data"`).
 - **`backtest`:** `PY S\backtest_screener.py --v2` (rules on stored history), then summarise against `references\backtest_report.md`. Rebuild features first with `PY S\screener.py --rebuild` if prices changed. No tokens.

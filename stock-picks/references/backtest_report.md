@@ -174,6 +174,23 @@ Finding: the momentum long-short factor earned money every year, 2024 included (
 and its deeper-than-Nifty drawdown come from being long in a falling market (beta), not from momentum failing, so a
 fix would have to manage market exposure, not factor volatility.
 
+## RSRS market-timing overlay (live in v3, `scripts/timing.py`)
+
+Source: QuantsPlaybook (Everbright Securities). The Nifty 50's 18-day slope of high on low, z-scored over 600 days, × R².
+No new entries after the score falls below −0.7, until it rises above +0.7. Research and the parameter grid are in
+`research/REPORT_awesome_round2.md`. Portfolio replay (`backtest_screener.py --portfolio`):
+
+| | Screener only, train / test / all | With RSRS, train / test / all |
+|---|---|---|
+| CAGR | 17.0% / 5.8% / 11.6% | 16.8% / **9.4%** / **13.0%** |
+| Sharpe (vs 6.5%) | 0.59 / 0.02 / 0.35 | 0.72 / **0.26** / **0.50** |
+| Max drawdown | −23.4% / −15.6% / −27.0% | **−10.4% / −8.2% / −12.7%** |
+| Average exposure | 56% / 53% / 55% | 33% / 28% / 31% |
+
+It stands aside on about 45% of trading days (413 of 926 since it became computable). It gives up upside in strong bull
+years (2023: +50% vs +77%) and turned 2024 and 2025 from losses into small gains. The drawdown gain held in 27 of 27
+parameter settings; the return gain in 16 of 27.
+
 ## Known limits
 
 - **Survivorship bias:** today's constituents only, so past returns are flattered; comparisons between configs are less affected.

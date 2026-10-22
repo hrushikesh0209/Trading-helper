@@ -89,6 +89,11 @@ traded value under ₹10 crore a day; price under ₹50.
 
 ## 4. Market regime (layer 1)
 
+**Market timing gate (v3, backtested):** before anything else, RSRS (`scripts/timing.py`) decides whether new entries
+are allowed at all. It stands aside after the Nifty's RSRS score falls below −0.7 and takes entries again after it
+rises above +0.7. On stand-aside days every candidate is a Wait (watchlist) and open trades keep their own stops. The
+regime table below then sets how many picks and what size on the days entries are allowed.
+
 | Signal | Risk-on | Neutral | Risk-off |
 |---|---|---|---|
 | Nifty 50 vs SMA200 | above, SMA200 rising | within ±2% | below |

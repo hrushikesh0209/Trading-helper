@@ -336,7 +336,12 @@ def write_outputs(day: str, x, picks, pos, reg_row, sec_day):
     # Reports are swing-only by the user's choice; positional_list() stays for backtests.
     picks[COLS].to_csv(SCREENS / f"{day}_swing25.csv", index=False, float_format="%.4f")
     r = reg_row
-    regime_md = (f"# Market regime {day}: {r.regime.upper()} (show up to {r.picks} picks)\n\n"
+    import timing
+    t = timing.timing_on(day)
+    timing_line = ("TAKE ENTRIES" if t["take_entries"] else "STAND ASIDE: no new entries today") + \
+        f" (RSRS score {t['score']:+.2f}; state since {t['since']}; {t['rule']})"
+    regime_md = (f"# Market regime {day}: {r.regime.upper()} (show up to {r.picks if t['take_entries'] else 0} picks)\n\n"
+                 f"**Market timing:** {timing_line}\n\n"
                  f"| Signal | Value |\n|---|---|\n| Nifty 50 | {r.nifty:,.2f} |\n"
                  f"| vs SMA200 | {r.nifty_vs200:+.1%} (SMA200 {'rising' if r.nifty_sma200_up else 'falling'}) |\n"
                  f"| vs SMA50 | {r.nifty_vs50:+.1%} |\n| % of Nifty 500 above SMA50 | {r.a50:.0%} |\n"
@@ -350,7 +355,8 @@ def write_outputs(day: str, x, picks, pos, reg_row, sec_day):
     (SCREENS / "sector_snapshot.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     (SCREENS / f"{day}_sectors.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     vetoes = x.veto.replace("", "passed").value_counts().to_dict()
-    summary = {"date": day, "regime": r.regime, "picks": int(r.picks), "universe": int(len(x)),
+    summary = {"date": day, "regime": r.regime, "picks": int(r.picks) if t["take_entries"] else 0,
+               "timing": {**t, "text": timing_line}, "universe": int(len(x)),
                "vetoes": vetoes, "with_setup": int((x.setups != "").sum()),
                "swing_list": int(len(picks))}
     (SCREENS / f"{day}_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")

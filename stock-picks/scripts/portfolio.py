@@ -77,13 +77,17 @@ def metrics(eq):
 
 
 def report(panel, reg, sec, mkt, split, hold=20):
+    import timing
     dates = list(mkt.dates[300:-hold - 1])[::5]
     tr = trades_with_paths(panel, reg, sec, mkt, sc.Config(), dates, hold)
-    rows = []
-    for label, s, e in (("train", dates[0], split), ("test", split, mkt.dates[-1]), ("all", dates[0], mkt.dates[-1])):
-        eq, expo = simulate(tr, mkt, s, e)
-        n = mkt.nifty.loc[eq.index[0]:eq.index[-1]]
-        rows.append({"period": label, **{f"strategy {k}": v for k, v in metrics(eq).items()},
-                     "strategy avg exposure%": round(100 * expo), **{f"Nifty {k}": v for k, v in metrics(n).items()}})
-    print("\nPORTFOLIO (live rules; risk sizing; max 10 positions; 0.25% costs; Sharpe vs 6.5% risk-free)")
-    print(pd.DataFrame(rows).set_index("period").T.to_string())
+    state = timing.timing_series().state
+    tr_timed = tr[tr.date.map(state).fillna(1.0) == 1.0]  # RSRS overlay: no entries while standing aside
+    for title, trades in (("screener only", tr), ("screener + RSRS market timing (live in v3)", tr_timed)):
+        rows = []
+        for label, s, e in (("train", dates[0], split), ("test", split, mkt.dates[-1]), ("all", dates[0], mkt.dates[-1])):
+            eq, expo = simulate(trades, mkt, s, e)
+            n = mkt.nifty.loc[eq.index[0]:eq.index[-1]]
+            rows.append({"period": label, **{f"strategy {k}": v for k, v in metrics(eq).items()},
+                         "strategy avg exposure%": round(100 * expo), **{f"Nifty {k}": v for k, v in metrics(n).items()}})
+        print(f"\nPORTFOLIO: {title} (risk sizing; max 10 positions; 0.25% costs; Sharpe vs 6.5% risk-free)")
+        print(pd.DataFrame(rows).set_index("period").T.to_string())

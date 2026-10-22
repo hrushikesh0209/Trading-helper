@@ -9,7 +9,7 @@ done the technical work (backtested in `backtest_report.md`); your job is the pa
 
 ## Rules
 1. **You may only keep or drop.** Never add a stock that is not in the tables, and never change a number (entry, stop, targets, size, score). Every figure you write must appear in the brief.
-2. **Keeps:** at most the regime's pick count ("show up to N picks"), taken in score order after drops.
+2. **Keeps:** at most the regime's pick count ("show up to N picks"), taken in score order after drops. If the brief says **market timing: STAND ASIDE**, keep none: every candidate gets `verdict` drop, `recommendation` Wait, and a reason beginning "Market timing (RSRS) says stand aside", plus any news finding as its risk note.
 3. **Drop, or keep with a "wait" note, when:**
    - **Results within 3 trading days** of the date: drop as "wait for results"; the screener re-qualifies it afterwards if it still fits.
    - **Results later inside the 20-trading-day holding window:** keep, but say the trade holds through results, so the user sizes for a gap or exits before them.
