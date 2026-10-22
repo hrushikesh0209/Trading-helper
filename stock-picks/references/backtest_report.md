@@ -157,6 +157,23 @@ Chosen on the training period, as every change is; the old rule's better test fi
 lost money in training under every variant and made money in testing under every variant, which is why positions are
 half size in risk-off.
 
+## Ideas tested from wangzhe3224/awesome-systematic-trading (v2 branch, 2026-10-22)
+
+The repo is a curated list of about 300 projects; its code folders are placeholders. Five ideas that target measured
+weaknesses were tested on our data (`research/awesome_tests.py`, isolated research venv):
+
+| Idea (source in the list) | Result | Decision |
+|---|---|---|
+| Portfolio metrics (quantstats, pyfolio, ffn) | All years: CAGR 11.6% vs Nifty 6.1%, Sharpe 0.35 vs 0.02, **max drawdown −27.0% vs −15.8%**, average exposure 55% | **Integrated** as `--portfolio` (evaluation only) |
+| Date-clustered t-stats (honest-signals, Lacuna) | No pattern significant in both periods; some pooled t-stats were overstated (double bottom train −4.4 pooled, −1.2 clustered) | **Integrated** into `pattern_study.py` (evaluation only) |
+| Volatility-managed momentum (pysystemtrade) | Train-best scheme (skip when 3-month momentum-factor return < 0) failed on test: CAGR 1.5% vs 5.8% live; vol targeting was worse on train | Rejected |
+| Hurst exponent factor (hurst-calculator) | IC −0.001 train, −0.005 test | Rejected |
+| ML ranking (Qlib-style gradient boosting, purged split) | Test IC +0.037 and top-10 excess +0.93% per 15 days, vs the momentum score's +0.057 and +1.94% | Rejected |
+
+Finding: the momentum long-short factor earned money every year, 2024 included (+14%). The strategy's 2024–25 losses
+and its deeper-than-Nifty drawdown come from being long in a falling market (beta), not from momentum failing, so a
+fix would have to manage market exposure, not factor volatility.
+
 ## Known limits
 
 - **Survivorship bias:** today's constituents only, so past returns are flattered; comparisons between configs are less affected.

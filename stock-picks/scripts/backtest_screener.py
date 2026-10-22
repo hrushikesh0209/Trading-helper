@@ -238,6 +238,7 @@ def main():
     ap.add_argument("--variants", action="store_true")
     ap.add_argument("--v2", action="store_true", help="the momentum / trailing-exit candidates")
     ap.add_argument("--levels", action="store_true", help="ATR vs technical (support/resistance) stops and targets")
+    ap.add_argument("--portfolio", action="store_true", help="equity curve, CAGR, Sharpe and drawdown of the live rules")
     ap.add_argument("--every", type=int, default=5, help="trading days between signal dates")
     ap.add_argument("--hold", type=int, default=15)
     ap.add_argument("--take", default="regime", help="'regime' (3/6/10 by regime) or a fixed number")
@@ -255,6 +256,9 @@ def main():
     print("bar to beat (train):", universe_baseline(panel, mkt, train, a.hold),
           "| (test):", universe_baseline(panel, mkt, test, a.hold))
 
+    if a.portfolio:
+        import portfolio
+        return portfolio.report(panel, reg, sec, mkt, SPLIT)
     if a.levels:
         modes = {"atr": "ATR stop 2x, trail 2 ATR", "ta": "fixed technical stop, trail 2 ATR (v3)",
                  "ad_ta": "ADAPTIVE stop, trail 2 ATR",

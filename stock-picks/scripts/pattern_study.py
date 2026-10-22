@@ -87,7 +87,11 @@ def main():
 
 def _summ(g):
     t = g.excess.mean() / g.excess.std() * np.sqrt(len(g)) if len(g) > 2 else np.nan
-    r = {"n": len(g), "excess%": round(100 * g.excess.mean(), 2), "t": round(t, 1),
+    # Events on the same day share the market's move, so the pooled t overstates the
+    # evidence; the clustered t treats each day as one observation (honest-signals idea).
+    daily = g.groupby("date").excess.mean()
+    ct = daily.mean() / daily.std() * np.sqrt(len(daily)) if len(daily) > 2 else np.nan
+    r = {"n": len(g), "excess%": round(100 * g.excess.mean(), 2), "t": round(t, 1), "clustered t": round(ct, 1),
          "median excess%": round(100 * g.excess_med.median(), 2),
          "beat%": round(100 * (g.excess_med > 0).mean(), 1)}  # share beating the day's median stock
     if g.hit.notna().any():
@@ -107,7 +111,8 @@ def _table(ev, keys, cols):
 def report(ev, H):
     pd.set_option("display.width", 220)
     for kind in ("chart", "candle"):
-        tab = _table(ev[ev.kind == kind], ["pattern", "period"], ["n", "excess%", "t", "median excess%", "beat%", "target first%"])
+        tab = _table(ev[ev.kind == kind], ["pattern", "period"],
+                     ["n", "excess%", "t", "clustered t", "median excess%", "beat%", "target first%"])
         print(f"\n=== {kind} patterns: {H}-day excess return vs the median stock that day ===")
         print(tab.sort_values("train excess%", ascending=False).to_string())
     print("\nBullish events by context: uptrend = close > SMA200; at_support = low within 0.5 ATR of EMA20 or SMA50")
